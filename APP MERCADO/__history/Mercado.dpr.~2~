@@ -1,0 +1,16 @@
+program Mercado;
+
+uses
+  System.StartUpCopy,
+  FMX.Forms,
+  UnitLogin in 'UnitLogin.pas' {Login},
+  UnitMercado in 'UnitMercado.pas' {Form1};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.CreateForm(TLogin, Login);
+  Application.CreateForm(TForm1, Form1);
+  Application.Run;
+end.

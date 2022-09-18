@@ -1,0 +1,117 @@
+unit UnitMercado;
+
+interface
+
+uses
+  System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
+  FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.Objects,
+  FMX.Layouts, FMX.Controls.Presentation, FMX.Edit, FMX.StdCtrls, FMX.ListBox;
+
+type
+  TFrmMercado = class(TForm)
+    Image1: TImage;
+    Image2: TImage;
+    LytPesquisa: TLayout;
+    StyleBook1: TStyleBook;
+    RecPesquisa: TRectangle;
+    Edit1: TEdit;
+    Button1: TButton;
+    Lbcategoria: TListBox;
+    ListBoxItem1: TListBoxItem;
+    Rectangle1: TRectangle;
+    Label1: TLabel;
+    ListBoxItem2: TListBoxItem;
+    Rectangle2: TRectangle;
+    Label2: TLabel;
+    Libprodutos: TListBox;
+    procedure FormShow(Sender: TObject);
+  private
+    procedure AddProduto(id_produto: integer; descricao, unidade: string;
+      valor: double);
+    procedure ListarProdutos;
+    procedure ListarCategorias;
+    procedure AddCategoria(id_categoria: integer; descricao: string);
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  FrmMercado: TFrmMercado;
+
+implementation
+
+{$R *.fmx}
+
+uses UnitLogin, FrameProdutoCard;
+
+procedure TFrmMercado.AddProduto(id_produto: integer;
+                                 descricao, unidade: string;
+                                 valor: double);
+var
+    item: TListBoxItem;
+    frame: TFrameProdutoCard1;
+
+    begin
+    item := TListBoxItem.Create(Libprodutos);
+    item.Selectable := false;
+    item.Text := '';
+    item.Height := 200;
+    item.Tag := id_produto;
+
+    //Frame
+    frame := TFrameProdutoCard1.Create(item);
+    //frame.imgfoto.bitmap :=
+    frame.lbldescricao.text := descricao;
+    frame.lblvalor.text := FormatFloat('R$ #,##0.00', valor);
+    frame.lblunidade.text := unidade;
+
+     item.AddObject(frame);
+
+    Libprodutos.AddObject(item);
+end;
+
+procedure TFrmMercado.ListarProdutos;
+begin
+//Acessar os dados no backend
+
+    AddProduto(0, 'Café Pilão Torrado e Moído', '500g', 15);
+    AddProduto(0, 'Café Pilão Torrado e Moído', '500g', 15);
+    AddProduto(0, 'Café Pilão Torrado e Moído', '500g', 15);
+    AddProduto(0, 'Café Pilão Torrado e Moído', '500g', 15);
+    AddProduto(0, 'Café Pilão Torrado e Moído', '500g', 15);
+end;
+
+procedure TFrmMercado.AddCategoria(id_categoria: integer;
+                                   descricao: string);
+
+var item: TListBoxItem;
+
+begin
+    item := TListBoxItem.Create(lbCategoria);
+    item.Selectable := false;
+    item.Text := descricao;
+    item.Width := 130;
+    item.Tag := id_categoria;
+
+    Lbcategoria.AddObject(item);
+end;
+
+procedure TFrmMercado.ListarCategorias;
+
+begin
+    Lbcategoria.Items.Clear;
+
+    AddCategoria(0, 'Alimentos');
+    AddCategoria(1, 'Bebidas');
+    AddCategoria(2, 'Limpeza');
+    AddCategoria(3, 'Pets');
+
+    ListarProdutos;
+end;
+procedure TFrmMercado.FormShow(Sender: TObject);
+begin
+   ListarCategorias;
+end;
+
+end.
