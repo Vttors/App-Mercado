@@ -9,7 +9,8 @@ uses
   UnitSpalsh in 'UnitSpalsh.pas' {FormSplash},
   UnitProduto in 'UnitProduto.pas' {FrmProduto},
   UnitCarrinho in 'UnitCarrinho.pas' {FrmCarrinho},
-  Frame.ProdutoLista in 'Frames\Frame.ProdutoLista.pas' {FrameProdutoLista: TFrame};
+  Frame.ProdutoLista in 'Frames\Frame.ProdutoLista.pas' {FrameProdutoLista: TFrame},
+  UnitPedido in 'UnitPedido.pas' {Form1};
 
 {$R *.res}
 
@@ -20,5 +21,6 @@ begin
   Application.CreateForm(TLogin, Login);
   Application.CreateForm(TFrmProduto, FrmProduto);
   Application.CreateForm(TFrmCarrinho, FrmCarrinho);
+  Application.CreateForm(TForm1, Form1);
   Application.Run;
 end.

@@ -1,7 +1,7 @@
 object FrameProdutoLista: TFrameProdutoLista
   Align = Client
   Size.Width = 328.000000000000000000
-  Size.Height = 103.000000000000000000
+  Size.Height = 80.000000000000000000
   Size.PlatformDefault = False
   object lblvalor: TLabel
     Align = Right
@@ -11,7 +11,7 @@ object FrameProdutoLista: TFrameProdutoLista
     Position.X = 264.000000000000000000
     Position.Y = 10.000000000000000000
     Size.Width = 64.000000000000000000
-    Size.Height = 63.000000000000000000
+    Size.Height = 40.000000000000000000
     Size.PlatformDefault = False
     TextSettings.FontColor = xFFA3A3A3
     TextSettings.HorzAlign = Center
@@ -5712,13 +5712,13 @@ object FrameProdutoLista: TFrameProdutoLista
     Position.X = 5.000000000000000000
     Position.Y = 5.000000000000000000
     Size.Width = 76.000000000000000000
-    Size.Height = 93.000000000000000000
+    Size.Height = 70.000000000000000000
     Size.PlatformDefault = False
   end
   object Layout1: TLayout
     Align = Client
     Size.Width = 178.000000000000000000
-    Size.Height = 103.000000000000000000
+    Size.Height = 80.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 2
     object lbldescricao: TLabel

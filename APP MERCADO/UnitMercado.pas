@@ -9,7 +9,7 @@ uses
 
 type
   TFrmMercado = class(TForm)
-    Image1: TImage;
+    imgCarrinho: TImage;
     LytPesquisa: TLayout;
     StyleBook1: TStyleBook;
     RecPesquisa: TRectangle;
@@ -23,12 +23,26 @@ type
     Rectangle2: TRectangle;
     Label2: TLabel;
     Libprodutos: TListBox;
-    Image2: TImage;
+    imgmenu: TImage;
+    Rectmenu: TRectangle;
+    Image1: TImage;
+    imgfecharmenu: TImage;
+    Label3: TLabel;
+    Label4: TLabel;
+    rectlogoff: TRectangle;
+    Label5: TLabel;
+    rectperfil: TRectangle;
+    Label6: TLabel;
+    rectpedidos: TRectangle;
+    Label7: TLabel;
     procedure FormShow(Sender: TObject);
     procedure LbcategoriaItemClick(const Sender: TCustomListBox;
       const Item: TListBoxItem);
     procedure LibprodutosItemClick(const Sender: TCustomListBox;
       const Item: TListBoxItem);
+    procedure imgCarrinhoClick(Sender: TObject);
+    procedure imgmenuClick(Sender: TObject);
+    procedure imgfecharmenuClick(Sender: TObject);
   private
     procedure AddProduto(id_produto: integer; descricao, unidade: string;
       valor: double);
@@ -36,6 +50,7 @@ type
     procedure ListarCategorias;
     procedure AddCategoria(id_categoria: integer; descricao: string);
     procedure SelecionarCategoria(item: TListBoxItem);
+    procedure OpenMenu(ind: boolean);
     { Private declarations }
   public
     { Public declarations }
@@ -48,7 +63,7 @@ implementation
 
 {$R *.fmx}
 
-uses UnitLogin, FrameProdutoCard, UnitProduto;
+uses UnitLogin, FrameProdutoCard, UnitProduto, UnitCarrinho;
 
 procedure TFrmMercado.AddProduto(id_produto: integer;
                                  descricao, unidade: string;
@@ -195,6 +210,29 @@ end;
 procedure TFrmMercado.FormShow(Sender: TObject);
 begin
    ListarCategorias;
+end;
+
+procedure TFrmMercado.imgCarrinhoClick(Sender: TObject);
+begin
+    if NOT Assigned(FrmCarrinho) then
+      Application.CreateForm(TfrmCarrinho, FrmCarrinho);
+
+    FrmCarrinho.Show;
+end;
+
+procedure TFrmMercado.imgfecharmenuClick(Sender: TObject);
+begin
+    OpenMenu(false);
+end;
+
+procedure TFrmMercado.OpenMenu(ind: boolean);
+begin
+  rectMenu.Visible := ind;
+end;
+
+procedure TFrmMercado.imgmenuClick(Sender: TObject);
+begin
+    OpenMenu(true);
 end;
 
 end.
