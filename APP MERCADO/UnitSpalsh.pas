@@ -23,14 +23,14 @@ implementation
 
 {$R *.fmx}
 
-uses UnitMercado;
+uses UnitLogin;
 
 procedure TFormSplash.Image1Click(Sender: TObject);
 begin
-   if NOT Assigned(FrmMercado) then
-    Application.CreateForm(TFrmMercado, FrmMercado);
+   if NOT Assigned(Login) then
+    Application.CreateForm(TLogin, Login);
 
-    FrmMercado.Show;
+    Login.Show;
 end;
 
 end.

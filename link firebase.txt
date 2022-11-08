@@ -1,0 +1,33 @@
+https://console.firebase.google.com/project/testetccle/database/testetccle-default-rtdb/data/~2Fapp
+
+
+https://testetccle-default-rtdb.firebaseio.com
+
+https://testetccle-default-rtdb.firebaseio.com/app.json    -> p colocar no labView 
+
+
+
+
+
+Estrutura
+
+banana: 7
+brinquedo:9
+cafe: 0
+cerveja: 2
+coleira: 8
+detergente: 7
+energetico: 2
+feijao: 5
+morango: 4
+pano: 7
+peitoDeFrango: 7
+racao: 5
+refrigerante: 1
+sabaoEmPo: 8
+shampoo: 4
+shampooAlerta: 6
+suco: 7
+tilapia: 10
+vassoura: 10
+

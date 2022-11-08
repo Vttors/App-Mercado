@@ -1,5 +1,4 @@
 program Mercado;
-
 uses
   System.StartUpCopy,
   FMX.Forms,
@@ -10,10 +9,16 @@ uses
   UnitProduto in 'UnitProduto.pas' {FrmProduto},
   UnitCarrinho in 'UnitCarrinho.pas' {FrmCarrinho},
   Frame.ProdutoLista in 'Frames\Frame.ProdutoLista.pas' {FrameProdutoLista: TFrame},
-  UnitPedido in 'UnitPedido.pas' {Form1};
+  UnitPedido in 'UnitPedido.pas' {Form1},
+  Firebase.Auth in 'Firebase\Firebase.Auth.pas',
+  Firebase.Database in 'Firebase\Firebase.Database.pas',
+  Firebase.Interfaces in 'Firebase\Firebase.Interfaces.pas',
+  Firebase.Request in 'Firebase\Firebase.Request.pas',
+  //{$R}
+  Firebase.Response in 'Firebase\Firebase.Response.pas' {$R *.res},
+  UnitCriarConta in 'UnitCriarConta.pas' {Form2};
 
 {$R *.res}
-
 begin
   Application.Initialize;
   Application.CreateForm(TFormSplash, FormSplash);
@@ -22,5 +27,6 @@ begin
   Application.CreateForm(TFrmProduto, FrmProduto);
   Application.CreateForm(TFrmCarrinho, FrmCarrinho);
   Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TForm2, Form2);
   Application.Run;
 end.

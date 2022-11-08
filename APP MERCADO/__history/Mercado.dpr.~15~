@@ -1,0 +1,32 @@
+program Mercado;
+
+uses
+  System.StartUpCopy,
+  FMX.Forms,
+  UnitLogin in 'UnitLogin.pas' {Login},
+  UnitMercado in 'UnitMercado.pas' {FrmMercado},
+  FrameProdutoCard in 'Frames\FrameProdutoCard.pas' {FrameProdutoCard1: TFrame},
+  UnitSpalsh in 'UnitSpalsh.pas' {FormSplash},
+  UnitProduto in 'UnitProduto.pas' {FrmProduto},
+  UnitCarrinho in 'UnitCarrinho.pas' {FrmCarrinho},
+  Frame.ProdutoLista in 'Frames\Frame.ProdutoLista.pas' {FrameProdutoLista: TFrame},
+  UnitPedido in 'UnitPedido.pas' {Form1},
+  Firebase.Auth in 'Firebase\Firebase.Auth.pas',
+  Firebase.Database in 'Firebase\Firebase.Database.pas',
+  Firebase.Interfaces in 'Firebase\Firebase.Interfaces.pas',
+  Firebase.Request in 'Firebase\Firebase.Request.pas',
+  Firebase.Response in 'Firebase\Firebase.Response.pas',
+  FrameInfoProduto in 'Frames\FrameInfoProduto.pas' {Frame1: TFrame};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  AApplication.CreateForm(TFormSplash, FormSplash);
+  AApplication.CreateForm(TFrmMercado, FrmMercado);
+  AApplication.CreateForm(TLogin, Login);
+  AApplication.CreateForm(TFrmProduto, FrmProduto);
+  AApplication.CreateForm(TFrmCarrinho, FrmCarrinho);
+  AApplication.CreateForm(TForm1, Form1);
+  ation.Run;
+end.
