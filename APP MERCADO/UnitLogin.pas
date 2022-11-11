@@ -28,7 +28,8 @@ type
   end;
 var
   Login: TLogin;
-  token: String;
+  token,localId: String;
+
 
 implementation
 uses
@@ -79,6 +80,7 @@ begin
   Obj := JSONResp as TJSONObject;
   Obj.Values['idToken'].Value;
   token := Obj.Values['idToken'].Value;
+  localId := Obj.Values['localId'].Value;
   if NOT Assigned(FRmMercado) then
     Application.CreateForm(TFRmMercado, FrmMercado);
 

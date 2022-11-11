@@ -172,23 +172,20 @@ begin
   ADatabase.SetToken(unitLogin.token);
   AParams := TDictionary<string, string>.Create;
   try
-    //AParams.Add('orderBy', '"$key"');
-    //AParams.Add('orderBy', '"cod"');
-    //AParams.Add('limitToLast', '2');
-    //AParams.Add('equalTo', '2');
-    //AParams.Add('startAt', '"2"');
-    //AParams.Add('endAt', '"4"');
+    Libprodutos.Clear();
     AResponse := ADatabase.Get(['/produtos.json'], AParams);
     JSONResp := TJSONObject.ParseJSONValue(AResponse.ContentAsString);
     produto :=    TJSONObject.ParseJSONValue(AResponse.ContentAsString) as TJSONArray;
     for x := 1  to produto.Size - 1 do
     begin
+
       id:= produto.Get(x).GetValue<integer>('id_produto');
       descricao := produto.Get(x).GetValue<string>('descricao');
       unidade := produto.Get(x).GetValue<string>('unidade');
       valor := produto.Get(x).GetValue<double>('valor');
       link := produto.Get(x).GetValue<string>('link');
       qtd := produto.Get(x).GetValue<integer>('qtd');
+
       AddProduto(id, descricao, unidade, valor, link, qtd);
     end;
     DownloadFoto(LibProdutos);
@@ -200,7 +197,6 @@ begin
       end;
       Exit;
     end;
-    //memoResp.Lines.Add(JSONResp.ToString);
   finally
     AParams.Free;
     ADatabase.Free;
@@ -303,7 +299,7 @@ procedure TFrmMercado.imgCarrinhoClick(Sender: TObject);
 begin
     if NOT Assigned(FrmCarrinho) then
       Application.CreateForm(TfrmCarrinho, FrmCarrinho);
-    FrmCarrinho.id_produto := 0;
+    //FrmCarrinho.id_produto := 0;
     FrmCarrinho.Show;
 end;
 procedure TFrmMercado.imgfecharmenuClick(Sender: TObject);

@@ -18,8 +18,10 @@ type
     imglimparcarrinho: TImage;
     procedure FormShow(Sender: TObject);
     procedure imglimparcarrinhoClick(Sender: TObject);
+    procedure btnadicionarClick(Sender: TObject);
     private
     Fid_produto: integer;
+    Fqtd_produto: integer;
     procedure AddProduto(descricao: string; id_produto: integer;
                                  link: string; qtd: integer;
                                  valor: double);
@@ -27,9 +29,9 @@ type
     procedure DownloadFoto(lb: TListBox);
     procedure LoadImageFromURL(img: TBitmap; url: string);
     procedure Qtd(valorqt: integer);
+    procedure LimparCarrinho;
         { Private declarations }
   public
-    property id_produto: integer read Fid_produto write Fid_produto;
     //property qtd_produto: integer read Fid_produto write Fid_produto;
     { Public declarations }
   end;
@@ -130,70 +132,186 @@ var
     item.AddObject(frame);
     lbProdutos.AddObject(item);
 
-    //total :=
-
-    lbltotal.Text := FormatFloat('R$ #,##0.00', total);
-
 end;
+procedure TFrmCarrinho.btnadicionarClick(Sender: TObject);
+var
+  ADatabase: TFirebaseDatabase;
+  AResponse: IFirebaseResponse;
+  carrinho: TJSONArray;
+  Writer: TJsonTextWriter;
+  StringWriter: TStringWriter;
+  teste: string;
+  JSONReq: TJSONObject;
+  JSONResp: TJSONValue;
+  qtd_requisicao: integer;
+  i,id_produto,qtd: Integer;
+  valor: double;
+const
+  DOMAIN = 'https://tcc-4a9dc-default-rtdb.firebaseio.com';
+begin
+if lbProdutos.Count > 0 then
+  begin
+    if lbProdutos.Count > 0 then
+    begin
+      ADatabase := TFirebaseDatabase.Create;
+      ADatabase.SetBaseURI(DOMAIN);
+      ADatabase.SetToken(unitLogin.token);
+
+      AResponse := ADatabase.Get(['/usuarios/' + localId + '/carrinho.json']);
+      teste :=  AResponse.ContentAsString;
+      carrinho := TJSONObject.ParseJSONValue(AResponse.ContentAsString) as TJSONArray;
+
+      AResponse := ADatabase.Get(['/usuarios/' + localId + '/requisicao.json']);
+      if AResponse.ContentAsString.CompareTo('""').ToBoolean then
+      begin
+        qtd_requisicao :=    (TJSONObject.ParseJSONValue(AResponse.ContentAsString) as TJSONArray).Count;
+      end
+      else
+      begin
+         qtd_requisicao := 1;
+      end;
+
+
+      StringWriter := TStringWriter.Create;
+      Writer := TJsonTextWriter.Create(StringWriter);
+      Writer.Formatting := TJsonFormatting.None;
+
+
+      Writer.WriteStartObject;
+      Writer.WritePropertyName(qtd_requisicao.ToString);
+      Writer.WriteStartObject;
+      Writer.WritePropertyName('id_compra');
+      Writer.WriteValue(qtd_requisicao);
+      Writer.WritePropertyName('subtotal');
+      Writer.WriteValue(lbltotal.Text.Remove(0,3).toDouble);
+      Writer.WritePropertyName('status');
+      Writer.WriteValue('Em Análise');
+      Writer.WritePropertyName('itens');
+      Writer.WriteStartObject;
+      for i := 1 to carrinho.Count-1 do
+      begin
+        Writer.WritePropertyName(i.ToString);
+        Writer.WriteStartObject;
+        Writer.WritePropertyName('id_produto');
+        Writer.WriteValue(carrinho.Get(i).GetValue<integer>('id_produto'));
+        Writer.WritePropertyName('valor');
+        Writer.WriteValue(carrinho.Get(i).GetValue<double>('valor'));
+        Writer.WritePropertyName('qtd');
+        Writer.WriteValue(carrinho.Get(i).GetValue<integer>('qtd'));
+        Writer.WriteEndObject;
+      end;
+      Writer.WriteEndObject;
+      Writer.WriteEndObject;
+      Writer.WriteEndObject;
+
+      JSONReq := TJSONObject.ParseJSONValue(StringWriter.ToString) as TJSONObject;
+
+      ADatabase := TFirebaseDatabase.Create;
+
+      ADatabase.SetBaseURI(DOMAIN);
+      ADatabase.SetToken(token);
+
+      try
+        AResponse := ADatabase.Patch(['/usuarios/' + localId + '/requisicao.json'], JSONReq);
+
+        JSONResp := TJSONObject.ParseJSONValue(AResponse.ContentAsString);
+        LimparCarrinho;
+        if (not Assigned(JSONResp)) or (not(JSONResp is TJSONObject)) then
+        begin
+          if Assigned(JSONResp) then
+          begin
+            JSONResp.Free;
+          end;
+          Exit;
+        end;
+      finally
+        ADatabase.Free;
+      end;
+    end;
+
+  end;
+end;
+
 procedure TFrmCarrinho.CarregarCarrinho;
 var
   ADatabase: TFirebaseDatabase;
   AResponse: IFirebaseResponse;
   AParams: TDictionary<string, string>;
   JSONResp: TJSONValue;
-  x: integer;
-  produto: TJsonArray;
-  id, qtd: integer;
-  valor: double;
-  descricao, unidade, link: String;
+  i: integer;
+  carrinho, produto: TJsonArray;
+  item: TJSONObject;
+  id, qtd, id_produto: integer;
+  valor, total: double;
+  descricao, unidade, link, teste: String;
 const
   DOMAIN = 'https://tcc-4a9dc-default-rtdb.firebaseio.com';
 begin
+  lbProdutos.Clear;
+  total := 0;
+  //Acessar os dados no backend
+  ADatabase := TFirebaseDatabase.Create;
+  ADatabase.SetBaseURI(DOMAIN);
+  ADatabase.SetToken(unitLogin.token);
+  AParams := TDictionary<string, string>.Create;
+  try
+    //Pegando itens do carrinho
+    AResponse := ADatabase.Get(['/usuarios/' + localId + '/carrinho.json'], AParams);
+    JSONResp := TJSONObject.ParseJSONValue(AResponse.ContentAsString);
 
-  if id_produto > 0 then
-  begin
-    //Acessar os dados no backend
-    ADatabase := TFirebaseDatabase.Create;
-    ADatabase.SetBaseURI(DOMAIN);
-    ADatabase.SetToken(unitLogin.token);
-    AParams := TDictionary<string, string>.Create;
-    try
-      //AParams.Add('orderBy', '"$key"');
-      //AParams.Add('orderBy', '"cod"');
-      //AParams.Add('limitToLast', '2');
-      //AParams.Add('equalTo', '2');
-      //AParams.Add('startAt', '"2"');
-      //AParams.Add('endAt', '"4"');
+    if AResponse.ContentAsString.CompareTo('""').ToBoolean then
+    begin
+      carrinho := TJSONObject.ParseJSONValue(AResponse.ContentAsString) as TJSONArray;
+    end
+    else
+    begin
+      exit;
+    end;
+
+    //Adicionando produtos do carrinho
+    for i := 1 to carrinho.Size -1 do
+    begin
+      //Informações do carrinho
+      id_produto := carrinho.Get(i).GetValue<integer>('id_produto');
+      qtd := carrinho.Get(i).GetValue<integer>('qtd');
+      valor := carrinho.Get(i).GetValue<double>('valor');
+
+      //Informações do produto
+      AParams.Clear;
+      AParams.Add('orderBy', '"$key"');
+      AParams.Add('equalTo', '"' + id_produto.ToString + '"');
       AResponse := ADatabase.Get(['/produtos.json'], AParams);
       JSONResp := TJSONObject.ParseJSONValue(AResponse.ContentAsString);
-      produto :=    TJSONObject.ParseJSONValue(AResponse.ContentAsString) as TJSONArray;
+      produto := TJSONObject.ParseJSONValue('[' + AResponse.ContentAsString + ']') as TJSONArray;
+
+      item :=  produto.Get(0).GetValue<TJSONObject>(id_produto.ToString);
+
+      produto := TJSONObject.ParseJSONValue('[' + item.ToString + ']') as TJSONArray;
+      descricao := produto.Get(0).GetValue<string>('descricao');;
+      id := produto.Get(0).GetValue<integer>('id_produto');
+      link := produto.Get(0).GetValue<string>('link');
 
 
-      //for x := 1 to produto.Size -1 do
-      //begin
-        descricao := produto.Get(id_produto).GetValue<string>('descricao');
-        id:= produto.Get(id_produto).GetValue<integer>('id_produto');
-        link := produto.Get(id_produto).GetValue<string>('link');
-        qtd := produto.Get(id_produto).GetValue<integer>('qtd');
-        valor := produto.Get(id_produto).GetValue<double>('valor');
 
-
-        AddProduto(descricao, id, link, qtd, valor);
-      //end;
-      DownloadFoto(LbProdutos);
-      if (not Assigned(JSONResp)) or (not(JSONResp is TJSONObject)) then
-      begin
-        if Assigned(JSONResp) then
-        begin
-          JSONResp.Free;
-        end;
-        Exit;
-      end;
-      //memoResp.Lines.Add(JSONResp.ToString);
-    finally
-      AParams.Free;
-      ADatabase.Free;
+       total := total + (valor*qtd);
+      AddProduto(descricao, id, link, qtd, valor);
     end;
+
+    lbltotal.Text := FormatFloat('R$ #,##0.00', total);
+
+    DownloadFoto(LbProdutos);
+    if (not Assigned(JSONResp)) or (not(JSONResp is TJSONObject)) then
+    begin
+      if Assigned(JSONResp) then
+      begin
+        JSONResp.Free;
+      end;
+      Exit;
+    end;
+    //memoResp.Lines.Add(JSONResp.ToString);
+  finally
+    AParams.Free;
+    ADatabase.Free;
   end;
 end;
 
@@ -211,13 +329,47 @@ procedure TFrmCarrinho.FormShow(Sender: TObject);
 begin
   CarregarCarrinho;
 end;
+
+
 procedure TFrmCarrinho.imglimparcarrinhoClick(Sender: TObject);
 begin
-     if id_produto > 0 then
-     begin
-     lbProdutos.Clear
-     end;
-
+  LimparCarrinho();
 end;
+
+procedure TFrmCarrinho.LimparCarrinho;
+var
+    ADatabase: TFirebaseDatabase;
+    AResponse: IFirebaseResponse;
+    JSONReq: TJSONObject;
+    JSONResp: TJSONValue;
+  i: Integer;
+const
+  DOMAIN = 'https://tcc-4a9dc-default-rtdb.firebaseio.com';
+  begin
+  lbltotal.Text := FormatFloat('R$ #,##0.00',0);
+    if lbprodutos.Count>0 then
+    begin
+      ADatabase := TFirebaseDatabase.Create;
+      ADatabase.SetBaseURI(DOMAIN);
+      ADatabase.SetToken(token);
+      for i := 1 to lbProdutos.Count do
+      begin
+        AResponse := ADatabase.Delete(['/usuarios/' + localId + '/carrinho/' + i.ToString + '.json']);
+      end;
+
+      JSONResp := TJSONObject.ParseJSONValue(AResponse.ContentAsString);
+        if (not Assigned(JSONResp)) or (not(JSONResp is TJSONObject)) then
+        begin
+          if Assigned(JSONResp) then
+          begin
+            JSONResp.Free;
+          end;
+          lbProdutos.Clear;
+          Exit;
+        end;
+        ADatabase.Free;
+    end;
+
+  end;
 
 end.
