@@ -30,6 +30,7 @@ type
     procedure LoadImageFromURL(img: TBitmap; url: string);
     procedure Qtd(valorqt: integer);
     procedure LimparCarrinho;
+    procedure AtualizarQTD(carrinho: String);
         { Private declarations }
   public
     //property qtd_produto: integer read Fid_produto write Fid_produto;
@@ -158,7 +159,6 @@ if lbProdutos.Count > 0 then
       ADatabase.SetToken(unitLogin.token);
 
       AResponse := ADatabase.Get(['/usuarios/' + localId + '/carrinho.json']);
-      teste :=  AResponse.ContentAsString;
       carrinho := TJSONObject.ParseJSONValue(AResponse.ContentAsString) as TJSONArray;
 
       AResponse := ADatabase.Get(['/usuarios/' + localId + '/requisicao.json']);
@@ -176,7 +176,7 @@ if lbProdutos.Count > 0 then
       Writer := TJsonTextWriter.Create(StringWriter);
       Writer.Formatting := TJsonFormatting.None;
 
-
+      //Gerando a requisição de compra
       Writer.WriteStartObject;
       Writer.WritePropertyName(qtd_requisicao.ToString);
       Writer.WriteStartObject;
@@ -205,6 +205,7 @@ if lbProdutos.Count > 0 then
       Writer.WriteEndObject;
 
       JSONReq := TJSONObject.ParseJSONValue(StringWriter.ToString) as TJSONObject;
+      teste := StringWriter.ToString;
 
       ADatabase := TFirebaseDatabase.Create;
 
@@ -228,8 +229,82 @@ if lbProdutos.Count > 0 then
         ADatabase.Free;
       end;
     end;
+    AtualizarQTD(carrinho.ToString);
 
   end;
+end;
+
+procedure TFrmCarrinho.AtualizarQTD(carrinho: String);
+var
+ADatabase: TFirebaseDatabase;
+AResponse: IFirebaseResponse;
+Writer: TJsonTextWriter;
+StringWriter: TStringWriter;
+teste: string;
+carrinho_Json, estoque: TJSONArray;
+JSONReq: TJSONObject;
+JSONResp: TJSONValue;
+qtd_requisicao: integer;
+i,id_produto,qtd: Integer;
+const
+DOMAIN = 'https://tcc-4a9dc-default-rtdb.firebaseio.com';
+
+begin
+  ADatabase := TFirebaseDatabase.Create;
+  ADatabase.SetBaseURI(DOMAIN);
+  ADatabase.SetToken(unitLogin.token);
+
+  AResponse := ADatabase.Get(['/app.json']);
+  estoque := TJSONObject.ParseJSONValue(AResponse.ContentAsString) as TJSONArray;
+
+  carrinho_Json := TJSONObject.ParseJSONValue(carrinho) as TJSONArray;
+
+  //Criando Tabela Leticia
+  StringWriter := TStringWriter.Create;
+  Writer := TJsonTextWriter.Create(StringWriter);
+  Writer.Formatting := TJsonFormatting.None;
+
+  Writer.WriteStartObject;
+  for i := 1 to carrinho_Json.Count-1 do
+      begin
+        Writer.WritePropertyName(carrinho_Json.Get(i).GetValue<integer>('id_produto').ToString);
+        Writer.WriteValue(estoque.Get(carrinho_Json.Get(i).GetValue<integer>('id_produto')).ToString.ToInteger - carrinho_Json.Get(i).GetValue<integer>('qtd'));
+      end;
+  Writer.WriteEndObject;
+
+  JSONReq := TJSONObject.ParseJSONValue(StringWriter.ToString) as TJSONObject;
+  teste :=    StringWriter.ToString;
+
+  ADatabase.SetBaseURI(DOMAIN);
+  ADatabase.SetToken(token);
+
+  try
+    AResponse := ADatabase.Patch(['/app.json'], JSONReq);
+    JSONResp := TJSONObject.ParseJSONValue(AResponse.ContentAsString);
+
+
+    if (not Assigned(JSONResp)) or (not(JSONResp is TJSONObject)) then
+    begin
+      if Assigned(JSONResp) then
+      begin
+        JSONResp.Free;
+      end;
+      Exit;
+    end;
+  finally
+    ADatabase.Free;
+  end;
+
+//  for i := 1 to carrinho_Json.Count-1 do
+//  begin
+//
+//
+//    (produtos.Items[carrinho_Json.Get(i).GetValue<integer>('id_produto')]);
+//
+//  end;
+
+
+
 end;
 
 procedure TFrmCarrinho.CarregarCarrinho;

@@ -160,7 +160,7 @@ var
   JSONResp: TJSONValue;
   x: integer;
   produto: TJsonArray;
-  id, qtd: integer;
+  id: integer;
   valor: double;
   descricao, unidade, link: String;
 const
@@ -176,7 +176,7 @@ begin
     AResponse := ADatabase.Get(['/produtos.json'], AParams);
     JSONResp := TJSONObject.ParseJSONValue(AResponse.ContentAsString);
     produto :=    TJSONObject.ParseJSONValue(AResponse.ContentAsString) as TJSONArray;
-    for x := 1  to produto.Size - 1 do
+    for x := 1  to produto.Count - 1 do
     begin
 
       id:= produto.Get(x).GetValue<integer>('id_produto');
@@ -184,9 +184,9 @@ begin
       unidade := produto.Get(x).GetValue<string>('unidade');
       valor := produto.Get(x).GetValue<double>('valor');
       link := produto.Get(x).GetValue<string>('link');
-      qtd := produto.Get(x).GetValue<integer>('qtd');
+//      qtd := produto.Get(x).GetValue<integer>('qtd');
 
-      AddProduto(id, descricao, unidade, valor, link, qtd);
+      AddProduto(id, descricao, unidade, valor, link, 0);
     end;
     DownloadFoto(LibProdutos);
     if (not Assigned(JSONResp)) or (not(JSONResp is TJSONObject)) then

@@ -1,0 +1,317 @@
+unit UnitMercado;
+interface
+uses
+  System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
+  FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.Objects,
+  FMX.Layouts, FMX.Controls.Presentation, FMX.Edit, FMX.StdCtrls, FMX.ListBox,
+  System.Net.HttpClientComponent;
+type
+  TFrmMercado = class(TForm)
+    imgCarrinho: TImage;
+    LytPesquisa: TLayout;
+    StyleBook1: TStyleBook;
+    RecPesquisa: TRectangle;
+    Edit1: TEdit;
+    Button1: TButton;
+    Lbcategoria: TListBox;
+    ListBoxItem1: TListBoxItem;
+    Rectangle1: TRectangle;
+    Label1: TLabel;
+    ListBoxItem2: TListBoxItem;
+    Rectangle2: TRectangle;
+    Label2: TLabel;
+    Libprodutos: TListBox;
+    imgmenu: TImage;
+    Rectmenu: TRectangle;
+    Image1: TImage;
+    imgfecharmenu: TImage;
+    Label3: TLabel;
+    Label4: TLabel;
+    rectlogoff: TRectangle;
+    Label5: TLabel;
+    rectperfil: TRectangle;
+    Label6: TLabel;
+    rectpedidos: TRectangle;
+    Label7: TLabel;
+    procedure FormShow(Sender: TObject);
+    procedure LbcategoriaItemClick(const Sender: TCustomListBox;
+      const Item: TListBoxItem);
+    procedure LibprodutosItemClick(const Sender: TCustomListBox;
+      const Item: TListBoxItem);
+    procedure imgCarrinhoClick(Sender: TObject);
+    procedure imgmenuClick(Sender: TObject);
+    procedure imgfecharmenuClick(Sender: TObject);
+  private
+    procedure AddProduto(id_produto: integer;
+                                 descricao, unidade: string;
+                                 valor: double; link: string; qtd: integer);
+    procedure ListarProdutos(id_categoria: integer);
+    procedure ListarCategorias;
+    procedure AddCategoria(id_categoria: integer; descricao: string);
+    procedure SelecionarCategoria(item: TListBoxItem);
+    procedure OpenMenu(ind: boolean);
+    procedure DownloadFoto(lb: TListBox);
+    procedure LoadImageFromURL(img: TBitmap; url: string);
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+var
+  FrmMercado: TFrmMercado;
+implementation
+{$R *.fmx}
+uses UnitLogin, FrameProdutoCard, UnitProduto, UnitCarrinho,
+Firebase.Interfaces,
+  Firebase.Auth,
+  Firebase.Database,
+  System.JSON,
+  System.Net.HttpClient,
+  System.Generics.Collections,
+  System.JSON.Types,
+  System.JSON.Writers;
+procedure TFrmMercado.LoadImageFromURL(img: TBitmap; url: string);
+var
+    http : TNetHTTPClient;
+    vStream : TMemoryStream;
+begin
+    try
+        try
+            http := TNetHTTPClient.Create(nil);
+            vStream :=  TMemoryStream.Create;
+
+            if (Pos('https', LowerCase(url)) > 0) then
+                  HTTP.SecureProtocols  := [THTTPSecureProtocol.TLS1,
+                                            THTTPSecureProtocol.TLS11,
+                                            THTTPSecureProtocol.TLS12];
+
+            http.Get(url, vStream);
+            vStream.Position  :=  0;
+
+
+            img.LoadFromStream(vStream);
+        except
+        end;
+
+    finally
+        vStream.DisposeOf;
+        http.DisposeOf;
+    end;
+end;
+ procedure TFrmMercado.DownloadFoto(lb: TListBox);
+var
+    t: TThread;
+    foto: TBitmap;
+    frame: TFrameProdutoCard1;
+begin
+    // Carregar imagens...
+    t := TThread.CreateAnonymousThread(procedure
+    var
+        i : integer;
+    begin
+
+        for i := 0 to lb.Items.Count - 1 do
+        begin
+            //sleep(1000);
+            frame := TFrameProdutoCard1(lb.ItemByIndex(i).Components[0]);
+
+
+            if frame.imgFoto.TagString <> '' then
+            begin
+                foto := TBitmap.Create;
+                LoadImageFromURL(foto, frame.imgFoto.TagString);
+
+                frame.imgFoto.TagString := '';
+                frame.imgFoto.bitmap := foto;
+            end;
+        end;
+
+    end);
+
+    t.Start;
+end;
+procedure TFrmMercado.AddProduto(id_produto: integer;
+                                 descricao, unidade: string;
+                                 valor: double; link: string; qtd: integer);
+var
+    item: TListBoxItem;
+    frame: TFrameProdutoCard1;
+    begin
+    item := TListBoxItem.Create(Libprodutos);
+    item.Selectable := false;
+    item.Text := '';
+    item.Height := 200;
+    item.Tag := id_produto;
+
+        //Frame
+    frame := TFrameProdutoCard1.Create(item);
+    frame.lbldescricao.text := descricao;
+    frame.lblunidade.text := unidade;
+    frame.lblvalor.text := FormatFloat('R$ #,##0.00', valor);
+    frame.imgfoto.TagString := link;
+
+    item.AddObject(frame);
+    Libprodutos.AddObject(item);
+end;
+procedure TFrmMercado.ListarProdutos(id_categoria: integer);
+var
+  ADatabase: TFirebaseDatabase;
+  AResponse: IFirebaseResponse;
+  AParams: TDictionary<string, string>;
+  JSONResp: TJSONValue;
+  x: integer;
+  produto: TJsonArray;
+  id, qtd: integer;
+  valor: double;
+  descricao, unidade, link: String;
+const
+  DOMAIN = 'https://tcc-4a9dc-default-rtdb.firebaseio.com';
+begin
+//Acessar os dados no backend
+  ADatabase := TFirebaseDatabase.Create;
+  ADatabase.SetBaseURI(DOMAIN);
+  ADatabase.SetToken(unitLogin.token);
+  AParams := TDictionary<string, string>.Create;
+  try
+    Libprodutos.Clear();
+    AResponse := ADatabase.Get(['/produtos.json'], AParams);
+    JSONResp := TJSONObject.ParseJSONValue(AResponse.ContentAsString);
+    produto :=    TJSONObject.ParseJSONValue(AResponse.ContentAsString) as TJSONArray;
+    for x := 1  to produto.Count - 1 do
+    begin
+
+      id:= produto.Get(x).GetValue<integer>('id_produto');
+      descricao := produto.Get(x).GetValue<string>('descricao');
+      unidade := produto.Get(x).GetValue<string>('unidade');
+      valor := produto.Get(x).GetValue<double>('valor');
+      link := produto.Get(x).GetValue<string>('link');
+      qtd := produto.Get(x).GetValue<integer>('qtd');
+
+      AddProduto(id, descricao, unidade, valor, link, qtd);
+    end;
+    DownloadFoto(LibProdutos);
+    if (not Assigned(JSONResp)) or (not(JSONResp is TJSONObject)) then
+    begin
+      if Assigned(JSONResp) then
+      begin
+        JSONResp.Free;
+      end;
+      Exit;
+    end;
+  finally
+    AParams.Free;
+    ADatabase.Free;
+  end;
+end;
+procedure TFrmMercado.SelecionarCategoria (item: TListBoxItem);
+var
+  x: integer;
+  item_loop: TListBoxItem;
+  rect: TRectangle;
+  lbl: TLabel;
+begin
+  //zerar itens
+  for x := 0 to Lbcategoria.Items.Count -1 do
+  begin
+     item_loop := Lbcategoria.ItemByIndex(x);
+     rect := TRectangle(item_loop.Components[0]);
+     rect.Fill.Color := $FFE2E2E2;
+     lbl := TLabel(rect.Components[0]);
+     lbl.FontColor := $FFA3A3A3;
+  end;
+  //ajusta somente o item selecionado
+   rect := TRectangle(item.Components[0]);
+   rect.Fill.Color := $FFBE6BFF;
+   lbl := TLabel(rect.Components[0]);
+   lbl.FontColor := $FF134C76;
+   //salvar a categoria selecionada
+   Lbcategoria.Tag := item.Tag;
+end;
+procedure TFrmMercado.AddCategoria(id_categoria: integer;
+                                   descricao: string);
+var item: TListBoxItem;
+    rect: TRectangle;
+    lbl: TLabel;
+begin
+    item := TListBoxItem.Create(lbCategoria);
+    item.Selectable := false;
+    item.Text := '';
+    item.Width := 130;
+    item.Tag := id_categoria;
+    rect := TRectangle.Create(item);
+    rect.Cursor := crHandPoint;
+    rect.HitTest := false;
+    rect.Fill.Color := $FFE2E2E2;
+    rect.Align := TAlignLayout.Client;
+    rect.Margins.Top := 5;
+    rect.Margins.Left := 5;
+    rect.Margins.Right := 5;
+    rect.Margins.Bottom := 5;
+    rect.XRadius := 6;
+    rect.YRadius := 6;
+    rect.Stroke.Kind := TBrushKind.None;
+    lbl := Tlabel.Create(rect);
+    lbl.Align := TAlignLayout.Client;
+    lbl.Text := descricao;
+    lbl.TextSettings.HorzAlign := TTextAlign.Center;
+    lbl.TextSettings.VertAlign := TTextAlign.Center;
+    lbl.StyledSettings := lbl.StyledSettings - [TStyledSetting.Size,
+                                                TStyledSetting.FontColor,
+                                                TStyledSetting.Style,
+                                                TStyledSetting.Other];
+    lbl.Font.Size := 12;
+    lbl.FontColor := $FFA3A3A3;
+    rect.AddObject(lbl);
+    item.AddObject(rect);
+    Lbcategoria.AddObject(item);
+end;
+procedure TFrmMercado.ListarCategorias;
+begin
+    Lbcategoria.Items.Clear;
+    AddCategoria(0, 'Alimentos');
+    AddCategoria(1, 'Bebidas');
+    AddCategoria(2, 'Limpeza');
+    AddCategoria(3, 'Pets');
+
+    if lbCategoria.Items.Count > 0 then
+        SelecionarCategoria(lbCategoria.ItembyIndex(0));
+        ListarProdutos(lbCategoria.Tag);
+end;
+procedure TFrmMercado.LbcategoriaItemClick(const Sender: TCustomListBox;
+  const Item: TListBoxItem);
+
+begin
+     SelecionarCategoria(item);
+end;
+procedure TFrmMercado.LibprodutosItemClick(const Sender: TCustomListBox;
+  const Item: TListBoxItem);
+begin
+    if NOT Assigned(FrmProduto) then
+      Application.CreateForm(TFrmProduto, FrmProduto);
+
+      FrmProduto.id_produto := Item.Tag;
+      FrmProduto.Show;
+end;
+procedure TFrmMercado.FormShow(Sender: TObject);
+begin
+   ListarCategorias;
+end;
+procedure TFrmMercado.imgCarrinhoClick(Sender: TObject);
+begin
+    if NOT Assigned(FrmCarrinho) then
+      Application.CreateForm(TfrmCarrinho, FrmCarrinho);
+    //FrmCarrinho.id_produto := 0;
+    FrmCarrinho.Show;
+end;
+procedure TFrmMercado.imgfecharmenuClick(Sender: TObject);
+begin
+    OpenMenu(false);
+end;
+procedure TFrmMercado.OpenMenu(ind: boolean);
+begin
+  rectMenu.Visible := ind;
+end;
+procedure TFrmMercado.imgmenuClick(Sender: TObject);
+begin
+    OpenMenu(true);
+end;
+end.
