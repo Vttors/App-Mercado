@@ -159,6 +159,7 @@ if lbProdutos.Count > 0 then
       ADatabase.SetToken(unitLogin.token);
 
       AResponse := ADatabase.Get(['/usuarios/' + localId + '/carrinho.json']);
+      teste := AResponse.ContentAsString;
       carrinho := TJSONObject.ParseJSONValue(AResponse.ContentAsString) as TJSONArray;
 
       AResponse := ADatabase.Get(['/usuarios/' + localId + '/requisicao.json']);
@@ -255,7 +256,7 @@ begin
   ADatabase.SetToken(unitLogin.token);
 
   AResponse := ADatabase.Get(['/app.json']);
-  estoque := TJSONObject.ParseJSONValue(AResponse.ContentAsString) as TJSONArray;
+  estoque := TJSONObject.ParseJSONValue('[' + AResponse.ContentAsString + ']') as TJSONArray;
 
   carrinho_Json := TJSONObject.ParseJSONValue(carrinho) as TJSONArray;
 
@@ -268,7 +269,7 @@ begin
   for i := 1 to carrinho_Json.Count-1 do
       begin
         Writer.WritePropertyName(carrinho_Json.Get(i).GetValue<integer>('id_produto').ToString);
-        Writer.WriteValue(estoque.Get(carrinho_Json.Get(i).GetValue<integer>('id_produto')).ToString.ToInteger - carrinho_Json.Get(i).GetValue<integer>('qtd'));
+        Writer.WriteValue(estoque.Get(0).GetValue<integer>(carrinho_Json.Get(i).GetValue<integer>('id_produto').ToString) - carrinho_Json.Get(i).GetValue<integer>('qtd'));
       end;
   Writer.WriteEndObject;
 
